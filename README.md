@@ -1,5 +1,4 @@
 # HuaXiaofangBot
-<<<<<<< HEAD
 
 东华大学镜月湖畔QQ频道私域机器人
 
@@ -60,4 +59,3 @@
 =======
 东华大学镜月湖畔QQ频道私域机器人
 基于原先Golang的[DHUGuildBot](https://github.com/kirakiseki/DHUGuildBot)，更改为使用Python
->>>>>>> 94f3da097ff0655f7b5df4a186cf121a9c94540c
