@@ -1,0 +1,27 @@
+# Bot
+appid: your_appid
+token: your_token
+# Email Configuration
+smtpServer: smtp.163.com
+account: example@163.com
+password: your_password
+# chromeDriver
+chromeDriverPath: your_chromeDriverPath
+# Verification Code Expiration Time (Minutes)
+expire: 5
+# Add Identity Group after Campus Email Verification
+verifiedEmailIdentity: your_verifiedEmailIdentity
+# Sub-channel
+aliasSearchWhitelist: your_sub_channel1,your_sub_channel2
+workChannel: your_sub_channel
+warningChannel: your_sub_channel
+# DHU Online Service Hall
+DHUUsername: your_DHUUsername
+DHUPassword: your_DHUPassword
+# OpenAI
+enableChatGPT: true
+enableChatGPTTime: 6:00-23:59
+OpenAIAPIKey: your_OpenAIAPIKey
+# rss
+rssFeeds:
+  https://jw.dhu.edu.cn/_wp3services/rssoffer?siteId=41&type=2&columnId=22080: 'your_sub_channel'

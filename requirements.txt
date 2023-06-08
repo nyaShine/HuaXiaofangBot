@@ -1,0 +1,9 @@
+aiocron
+openai
+beautifulsoup4
+selenium
+pandas
+aiohttp
+feedparser
+ruamel.yaml
+qq-botpy
