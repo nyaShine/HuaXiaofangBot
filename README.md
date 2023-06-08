@@ -1,4 +1,5 @@
 # HuaXiaofangBot
+<<<<<<< HEAD
 
 东华大学镜月湖畔QQ频道私域机器人
 
@@ -56,3 +57,7 @@
     - 如果你是学生，通常为example@mail
     - 机器人会向你的邮箱发送验证码，如【Y0000】
     - 请私信机器人【Y0000】（不包括括号）即可认证校园邮箱
+=======
+东华大学镜月湖畔QQ频道私域机器人
+基于原先Golang的[DHUGuildBot](https://github.com/kirakiseki/DHUGuildBot)，更改为使用Python
+>>>>>>> 94f3da097ff0655f7b5df4a186cf121a9c94540c

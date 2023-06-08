@@ -14,7 +14,7 @@ def connect_to_db():
     # 获取项目根目录路径
     project_root_path = os.path.dirname(os.path.dirname(current_file_path))
     # 构建数据库文件的相对路径
-    db_relative_path = os.path.join(project_root_path, "config", "questionAnswer.db")
+    db_relative_path = os.path.join(project_root_path, "db", "questionAnswer.db")
     # 连接到数据库
     conn = sqlite3.connect(db_relative_path)
     return conn

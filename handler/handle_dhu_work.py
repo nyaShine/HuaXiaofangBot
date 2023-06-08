@@ -141,7 +141,7 @@ async def get_dhu_work():
     driver.quit()
 
     # 创建一个数据库连接
-    connection = sqlite3.connect("config/workInfo.db")
+    connection = sqlite3.connect("db/workInfo.db")
 
     # 为DataFrame添加新列
     df1['发布在频道'] = '未发布'
@@ -175,7 +175,7 @@ async def get_dhu_work():
 
 
 async def get_dhu_work_info() -> Tuple[List[Dict[str, str]], List[Dict[str, str]]]:
-    conn = sqlite3.connect('config/workInfo.db')
+    conn = sqlite3.connect('db/workInfo.db')
     cursor = conn.cursor()
 
     on_campus_works = []
@@ -200,7 +200,7 @@ async def get_dhu_work_info() -> Tuple[List[Dict[str, str]], List[Dict[str, str]
 
 
 async def update_on_campus_work_status(学年: str, 校区: str, 用工单位: str, 岗位名称: str, 工作地点: str, status: str) -> None:
-    conn = sqlite3.connect('config/workInfo.db')
+    conn = sqlite3.connect('db/workInfo.db')
     cursor = conn.cursor()
 
     cursor.execute("UPDATE onCampusWork SET 发布在频道 = ? WHERE 学年 = ? AND 校区 = ? AND 用工单位 = ? AND 岗位名称 = ? AND 工作地点 = ?",
@@ -212,7 +212,7 @@ async def update_on_campus_work_status(学年: str, 校区: str, 用工单位: s
 
 
 async def update_off_campus_work_status(work_id: str, status: str) -> None:
-    conn = sqlite3.connect('config/workInfo.db')
+    conn = sqlite3.connect('db/workInfo.db')
     cursor = conn.cursor()
 
     cursor.execute("UPDATE offCampusWork SET 发布在频道 = ? WHERE 岗位编号 = ?",
