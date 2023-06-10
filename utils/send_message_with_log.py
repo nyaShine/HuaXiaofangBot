@@ -37,6 +37,29 @@ async def reply_with_log(message, content, quote=True, at=True, encode_urls=Fals
         _log.info(content_escaped_newlines)
 
 
+async def cross_channel_reply_with_log(client, message, content, channel_id, at=True, encode_urls=False):
+    if at:
+        content = f"<@{message.author.id}> {content}"
+
+    if encode_urls:
+        content = encode_urls_in_text(content)
+
+    contents = split_content(content)
+
+    for content in contents:
+        try:
+            await client.api.post_message(channel_id=channel_id, msg_id=message.id, content=content)
+        except ServerError as e:
+            if 'url not allowed' in str(e):
+                content = "所有的.已经被替换为。\n\n" + content.replace(".", "。")
+                await client.api.post_message(channel_id=channel_id, msg_id=message.id, content=content)
+            else:
+                raise e
+
+        content_escaped_newlines = content.replace('\n', '\\n')
+        _log.info(content_escaped_newlines)
+
+
 async def post_with_log(client, channel_id, content, encode_urls=False):
     if encode_urls:
         content = encode_urls_in_text(content)

@@ -33,7 +33,7 @@ async def call_gpt3_api(prompt, model_name="gpt-3.5-turbo"):
         "model": model_name,
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.2,
-        "max_tokens": 50
+        "max_tokens": 1000
     }
     response = openai.ChatCompletion.create(**data)
     return response

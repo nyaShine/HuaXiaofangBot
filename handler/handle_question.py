@@ -85,7 +85,7 @@ def add_question_answer(question, answer, alias=None):
 def add_channel_to_alias_whitelist(message):
     if is_creator_from_message(message):
         if config['aliasSearchWhitelist']:
-            channels = [int(channel.strip()) for channel in config['aliasSearchWhitelist'].split(',')]
+            channels = [channel.strip() for channel in config["aliasSearchWhitelist"].split(',')]
         else:
             channels = []
 
@@ -195,7 +195,7 @@ def smart_search(keywords):
 
 async def handle_question(client, message):
     content = message.content.strip()
-    command_parts = content.split(" ")
+    command_parts = content.split()
 
     if len(command_parts) < 3:
         await reply_with_log(message, get_help("/问"))
@@ -239,5 +239,58 @@ async def handle_question(client, message):
                 3].strip() else f"{result[0]} - {result[1]}" for result in search_result])
         else:  # 如果 search_result 为空，表示没有匹配的结果
             response = "抱歉，没有找到与您的搜索关键词匹配的结果。"
-
     await reply_with_log(message, response, encode_urls=True)  # 发送响应
+
+
+async def handle_alias_search(client, message):
+    content = message.content.strip()
+
+    # 获取别名搜索白名单中的子频道列表
+    alias_search_whitelist = [channel.strip() for channel in config["aliasSearchWhitelist"].split(',')]
+
+    # 如果消息子频道在别名搜索白名单中
+    if message.channel_id in alias_search_whitelist:
+        conn = connect_to_db()
+        cursor = conn.cursor()
+
+        try:
+            # 获取所有别名
+            cursor.execute("""
+                SELECT alias FROM questionAnswer
+            """)
+            aliases = [row[0] for row in cursor.fetchall() if row[0] is not None]  # 过滤掉 None 值
+            conn.close()
+        except sqlite3.Error as e:
+            print("Error: ", e)
+
+        # 根据别名匹配消息内容
+        matched_alias = None
+        for alias in aliases:
+            if alias in content:
+                matched_alias = alias
+                break
+
+        # 如果找到匹配的别名
+        if matched_alias:
+            conn = connect_to_db()
+            cursor = conn.cursor()
+
+            try:
+                # 根据别名搜索问题和答案
+                cursor.execute("""
+                    SELECT id, question, answer, alias FROM questionAnswer
+                    WHERE alias = ?
+                """, (matched_alias,))
+                result = cursor.fetchone()
+                conn.close()
+            except sqlite3.Error as e:
+                print("Error: ", e)
+
+            if result:
+                id, question, answer, alias = result
+                # 将答案中的 "\\n" 替换为换行符
+                answer = answer.replace("\\n", "\n")
+                question_with_alias = f"{question} ({alias})"
+
+                response = f"{id} - {question_with_alias}\n\n{answer}"
+                await reply_with_log(message, response, encode_urls=True)

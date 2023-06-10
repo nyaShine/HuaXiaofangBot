@@ -12,12 +12,18 @@ from utils.send_message_with_log import reply_with_log, post_with_log
 from utils.roles import is_creator_from_message
 
 
+# 辅助函数：通过URL在config中查找源名称
+def get_name_by_url(url):
+    for feed in config['rssFeeds']:
+        if feed['url'] == url:
+            return feed['name']
+    return ""
+
+
 async def get_rss_subscription(rss_link):
-    print(rss_link)
     async with aiohttp.ClientSession() as session:
         async with session.get(rss_link) as response:
             rss_content = await response.text()
-            print(rss_content)
             feed = feedparser.parse(rss_content)
 
     conn = sqlite3.connect("db/rssItems.db")
@@ -55,9 +61,12 @@ async def upload_rss_to_channel(client, channel_id):
         pub_date = datetime.datetime.strptime(item[4], "%Y-%m-%d %H:%M:%S")
         pub_date_str = pub_date.strftime("%Y-%m-%d")
 
-        # 根据实际需求格式化内容
+        # 获取源名称
+        source_name = get_name_by_url(item[9])
+
+        # 根据实际需求格式化内容，加入源名称
         content = (
-            f"东华大学教务处通知公告：\n"
+            f"{source_name}\n"
             f"{item[1]} ({pub_date_str})\n"
             f"{item[2]}\n"
             f"{item[3]}"
@@ -75,38 +84,50 @@ async def upload_rss_to_channel(client, channel_id):
 
 async def upload_rss_subscription(client):
     rssFeeds = config['rssFeeds']
-    for rss_link, channel_id in rssFeeds.items():
+    for feed in rssFeeds:
+        rss_link = feed['url']
+        channel_id = feed['channel']
         await get_rss_subscription(rss_link)
         await upload_rss_to_channel(client, channel_id)
 
 
 async def handle_rss_subscription(client, message):
     # 检查用户是否具有creator身份组
-    print(message)
-    print(is_creator_from_message(message))
     if not is_creator_from_message(message):
         await reply_with_log(message, "您没有权限使用此功能。仅限creator身份组的用户可以使用。")
         return
-    config = read_config()
+
+    # 分割消息内容
+    parts = message.content.split()
+    if len(parts) < 4:
+        await reply_with_log(message, "请提供命令、RSS链接和名称。")
+        return
 
     # 从消息中提取 RSS 链接
     rss_url_pattern = r'https?://\S+'
-    match = re.search(rss_url_pattern, message.content)
+    match = re.search(rss_url_pattern, parts[2])
     if match:
         rss_url = html.unescape(match.group(0))  # 使用html.unescape()对URL进行解码
     else:
         await reply_with_log(message, "未找到有效的 RSS 链接。请提供一个有效的 RSS 链接。")
         return
 
+    # 获取 RSS 名称
+    rss_name = parts[3]
+
     # 将 RSS 链接添加到配置文件
     if 'rssFeeds' not in config:
-        config['rssFeeds'] = {}
+        config['rssFeeds'] = []
 
     channel_id = message.channel_id
-
-    config['rssFeeds'][rss_url] = str(channel_id)
+    new_feed = {
+        'url': rss_url,
+        'name': rss_name,
+        'channel': str(channel_id)
+    }
+    config['rssFeeds'].append(new_feed)
 
     # 将更新后的配置写入文件
     write_config(config)
 
-    await reply_with_log(message, f"已成功在子频道 {channel_id} 上添加 RSS 订阅：{rss_url}")
+    await reply_with_log(message, f"已成功在子频道 {channel_id} 上添加 RSS 订阅：{rss_url}，名称：{rss_name}")

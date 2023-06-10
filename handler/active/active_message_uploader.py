@@ -25,7 +25,7 @@ async def active_message_uploader(client):
     @aiocron.crontab('*/45 * * * *')
     async def call_upload_rss_subscription():
         if is_time_range_valid():
-            await upload_rss_subscription(client)
+            asyncio.create_task(upload_rss_subscription(client))
         else:
             _log.info("Skipped upload_rss_subscription() due to time constraints.")
 
@@ -33,7 +33,7 @@ async def active_message_uploader(client):
     @aiocron.crontab('0 */3 * * *')
     async def call_upload_dhu_work():
         if is_time_range_valid():
-            await upload_dhu_work(client)
+            asyncio.create_task(upload_dhu_work(client))
         else:
             _log.info("Skipped upload_dhu_work() due to time constraints.")
 

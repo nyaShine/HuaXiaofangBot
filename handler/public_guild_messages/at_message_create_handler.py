@@ -1,3 +1,4 @@
+import asyncio
 import re
 from botpy import logging
 
@@ -13,6 +14,7 @@ _log = logging.get_logger()
 
 
 async def at_message_create_handler(client, message):
+    # print(message)
     timestamp = message.timestamp
     channel_id = message.channel_id
     member = message.member
@@ -33,15 +35,16 @@ async def at_message_create_handler(client, message):
         elif param1 == "/问":
             await handle_question(client, message)
         elif param1 == "/c":
-            await handle_chatgpt(client, message)
+            asyncio.create_task(handle_chatgpt(client, message))
         elif param1 == "/查询子频道":
             await handle_query_subchannel(client, message)
         elif param1 == "/查询身份组":
             await handle_query_identity_group(client, message)
         elif param1 == "/rss订阅":
             await handle_rss_subscription(client, message)
-        # elif param1 == "/测试":
-        #     await upload_dhu_work(client)
+        elif param1 == "/加屏蔽":
+            print(message)
+            # print(await client.api.get_message(channel_id=message.channel_id, message_id=message.message_reference.message_id))
         else:
             await reply_with_log(message, "无法识别的命令，请检查您的输入。")
     else:
