@@ -12,9 +12,9 @@ expire: 5
 # Add Identity Group after Campus Email Verification
 verifiedEmailIdentity: your_verifiedEmailIdentity
 # Sub-channel
-aliasSearchWhitelist: your_sub_channel1,your_sub_channel2
-workChannel: your_sub_channel
-warningChannel: your_sub_channel
+aliasSearchWhitelist: sub-channel_id1,sub-channel_id2,sub-channel_id3
+workChannel: sub-channel_id
+warningChannel: sub-channel_id1
 # DHU Online Service Hall
 DHUUsername: your_DHUUsername
 DHUPassword: your_DHUPassword
@@ -22,6 +22,14 @@ DHUPassword: your_DHUPassword
 enableChatGPT: true
 enableChatGPTTime: 6:00-23:59
 OpenAIAPIKey: your_OpenAIAPIKey
+# role
+adminRole: 4,2,7,adminRole1,adminRole2,adminRole3
 # rss
 rssFeeds:
-  https://jw.dhu.edu.cn/_wp3services/rssoffer?siteId=41&type=2&columnId=22080: 'your_sub_channel'
+  - url: rss_url1
+    name: rss_name1
+    channel: your_channel_id1
+  - url: rss_url2
+    name: rss_name2
+    channel: your_channel_id2
+
