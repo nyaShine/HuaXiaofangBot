@@ -7,4 +7,4 @@ _log = logging.get_logger()
 
 
 async def guild_member_add_handler(client, member: Member):
-    guild_moderation.handle_guild_member(client, member)
+    await guild_moderation.handle_guild_member(client, member)

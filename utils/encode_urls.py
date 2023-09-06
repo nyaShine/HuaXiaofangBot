@@ -10,7 +10,6 @@ url_regex = re.compile(
 def encode_urls_in_text(content, encode_urls):
     def replace_url(match):
         url = match.group(0)
-        print(f"Matched URL: {url}")  # 打印匹配到的URL
         preceding_character = content[match.start() - 1] if match.start() > 0 else None
         if preceding_character != '@':
             if encode_urls:

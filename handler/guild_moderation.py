@@ -44,9 +44,9 @@ class GuildModeration:
 
     # 执行规则
     @staticmethod
-    def execute_rule(rule, match, group_check, revoke, remove, remove_and_ban, mute, remove_and_revoke,
+    def execute_rule(rule, match, revoke, remove, remove_and_ban, mute, remove_and_revoke,
                      reminder_channel, reminder_text):
-        if match and group_check:
+        if match:
             if rule["revoke"]:
                 revoke = True
             if rule["remove"]:
@@ -64,7 +64,7 @@ class GuildModeration:
         return revoke, remove, remove_and_ban, mute, remove_and_revoke, reminder_channel, reminder_text
 
     # 处理接收到的消息
-    def handle_message(self, client, message: Message):
+    async def handle_message(self, client, message: Message):
         revoke = False
         remove = False
         remove_and_ban = False
@@ -72,15 +72,16 @@ class GuildModeration:
         remove_and_revoke = 0
         reminder_channel = ""
         reminder_text = ""
+        content = message.content if message.content else ""
         for rule in self.rules["message_rules"]:
             if rule["enabled"]:
                 # 如果规则启用，检查消息是否匹配规则
                 if rule["exact_match"]:
-                    match = any(word == message.content for word in rule["match_list"])
+                    match = any(word == content for word in rule["match_list"])
                 elif rule["regex"]:
-                    match = re.search(rule["match_list"], message.content)
+                    match = any(re.search(pattern, content) for pattern in rule["match_list"])
                 else:
-                    match = any(word in message.content for word in rule["match_list"])
+                    match = any(word in content for word in rule["match_list"])
 
                 # 检查用户身份组和子频道是否在白名单或黑名单中
                 if rule["group_whitelist"]:
@@ -94,8 +95,8 @@ class GuildModeration:
                     channel_check = message.channel_id not in rule["channel_list"]
 
                 revoke, remove, remove_and_ban, mute, remove_and_revoke, reminder_channel, reminder_text = \
-                    self.execute_rule(rule, match and group_check and channel_check, revoke, remove, remove_and_ban,
-                                      mute, remove_and_revoke, reminder_channel, reminder_text)
+                    self.execute_rule(rule, match and not group_check and not channel_check, revoke, remove,
+                                      remove_and_ban, mute, remove_and_revoke, reminder_channel, reminder_text)
 
         for rule in self.rules["username_rules"]:
             if rule["enabled"]:
@@ -115,7 +116,7 @@ class GuildModeration:
 
                 # 如果用户名匹配规则，并且用户身份组通过检查，执行相应的操作
                 revoke, remove, remove_and_ban, mute, remove_and_revoke, reminder_channel, reminder_text = \
-                    self.execute_rule(rule, match and group_check, revoke, remove, remove_and_ban, mute,
+                    self.execute_rule(rule, match and not group_check, revoke, remove, remove_and_ban, mute,
                                       remove_and_revoke, reminder_channel, reminder_text)
 
         # 执行最重的处罚
@@ -123,10 +124,10 @@ class GuildModeration:
             try:
                 await client.api.recall_message(channel_id=message.channel_id, message_id=message.id,
                                                 hidetip=False)
-                reminder_text += '已删除包含屏蔽词的消息'
+                reminder_text += '已删除包含屏蔽词的消息。'
             except ServerError as e:
                 if 'no permission to delete message' in str(e):
-                    reminder_text += '无法删除包含屏蔽词的消息'
+                    reminder_text += '无法删除包含屏蔽词的消息。'
                 else:
                     _log.error(f'删除消息时发生错误：{e}')
 
@@ -135,10 +136,10 @@ class GuildModeration:
             try:
                 await client.api.mute_member(guild_id=message.guild_id, user_id=message.author.id,
                                              mute_end_timestamp=mute_end_timestamp)
-                reminder_text += f'已禁言用户，禁言时长为{mute}秒'
+                reminder_text += f'已禁言用户，禁言时长为{mute}秒。'
             except ServerError as e:
                 if 'oidb rpc call failed' in str(e):
-                    reminder_text += '无法禁言发送违禁词的成员'
+                    reminder_text += '无法禁言发送违禁词的成员。'
                 else:
                     _log.error(f'禁言成员时发生错误：{e}')
 
@@ -150,10 +151,10 @@ class GuildModeration:
                     add_blacklist=remove_and_ban,
                     delete_history_msg_days=remove_and_revoke
                 )
-                reminder_text += f'已移除用户{"并已拉黑" if remove_and_ban else ""}，并已撤回{"全部历史消息" if remove_and_revoke == -1 else f"过去{remove_and_revoke}天的"}消息'
+                reminder_text += f'已移除用户{"并已拉黑" if remove_and_ban else ""}，并已撤回{"全部历史消息" if remove_and_revoke == -1 else f"过去{remove_and_revoke}天的"}消息。'
             except ServerError as e:
                 if 'no privilege remove member' in str(e):
-                    reminder_text += '无法移除发送违禁词的成员'
+                    reminder_text += '无法移除发送违禁词的成员。'
                 else:
                     _log.error(f'移除成员时发生错误：{e}')
 
@@ -168,7 +169,7 @@ class GuildModeration:
                                                    channel_id=reminder_channel, at=True)
 
     # 当新成员加入或成员资料变更时，检查其用户名
-    def handle_guild_member(self, client, member):
+    async def handle_guild_member(self, client, member):
         remove = False
         remove_and_ban = False
         mute = 0
@@ -191,7 +192,7 @@ class GuildModeration:
 
                 # 如果用户名匹配规则，并且用户身份组通过检查，执行相应的操作
                 _, remove, remove_and_ban, mute, remove_and_revoke, _, _ = \
-                    self.execute_rule(rule, match and group_check, False, remove, remove_and_ban, mute,
+                    self.execute_rule(rule, match and not group_check, False, remove, remove_and_ban, mute,
                                       remove_and_revoke, "", "")
 
         # 执行最重的处罚
