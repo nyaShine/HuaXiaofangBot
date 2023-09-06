@@ -1,15 +1,14 @@
 import asyncio
 
 from botpy.logging import get_logger
-from botpy.forum import Thread
 from botpy.message import Message
 import botpy
+from botpy.user import Member
 
 from config import config
 from handler.active.active_message_uploader import active_message_uploader
-from handler.direct_message.direct_message_create_handler import direct_message_create_handler
-from handler.forums.forum_thread_create_handler import forum_thread_create_handler
-from handler.forums.forum_thread_update_handler import forum_thread_update_handler
+from handler.guild_members.guild_member_add_handler import guild_member_add_handler
+from handler.guild_members.guild_member_update_handler import guild_member_update_handler
 from handler.public_guild_messages.at_message_create_handler import at_message_create_handler
 from handler.guild_messages.message_create_handler import message_create_handler
 
@@ -28,23 +27,16 @@ class MyClient(botpy.Client):
     async def on_message_create(self, message: Message):
         await message_create_handler(self, message)
 
-    # 当收到用户发给机器人的私信消息时
-    async def on_direct_message_create(self, message: Message):
-        await direct_message_create_handler(self, message)
+    # 当成员加入时
+    async def on_guild_member_add(self, member: Member):
+        await guild_member_add_handler(self, member)
 
-    # 当用户创建主题时
-    async def on_forum_thread_create(self, thread: Thread):
-        await forum_thread_create_handler(self, thread)
-
-    # 当用户更新主题时
-    async def on_forum_thread_update(self, thread: Thread):
-        await forum_thread_update_handler(self, thread)
+    # 当成员资料变更时
+    async def on_guild_member_update(self, member: Member):
+        await guild_member_update_handler(self, member)
 
 
 async def main():
-    # 加载 email_verification.db 数据库
-    # db = await load_email_verification_database()
-
     # 订阅所有事件
     intents = botpy.Intents.all()
     client = MyClient(intents=intents)

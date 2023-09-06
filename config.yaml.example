@@ -1,35 +1,42 @@
-# Bot
-appid: your_appid
-token: your_token
-# Email Configuration
-smtpServer: smtp.163.com
-account: example@163.com
-password: your_password
-# chromeDriver
-chromeDriverPath: your_chromeDriverPath
-# Verification Code Expiration Time (Minutes)
-expire: 5
-# Add Identity Group after Campus Email Verification
-verifiedEmailIdentity: your_verifiedEmailIdentity
-# Sub-channel
-aliasSearchWhitelist: sub-channel_id1,sub-channel_id2,sub-channel_id3
-workChannel: sub-channel_id
-warningChannel: sub-channel_id1
-# DHU Online Service Hall
-DHUUsername: your_DHUUsername
-DHUPassword: your_DHUPassword
-# OpenAI
-enableChatGPT: true
-enableChatGPTTime: 6:00-23:59
-OpenAIAPIKey: your_OpenAIAPIKey
-# role
-adminRole: 4,2,7,adminRole1,adminRole2,adminRole3
-# rss
-rssFeeds:
-  - url: rss_url1
-    name: rss_name1
-    channel: your_channel_id1
-  - url: rss_url2
-    name: rss_name2
-    channel: your_channel_id2
-
+DHUPassword: DHUPassword
+DHUUsername: DHUUsername
+appid: appid
+moderation_rules:
+  default_message_rules:
+    channel_list: []
+    channel_whitelist: true
+    enabled: true
+    exact_match: false
+    group_list:
+    - '2'
+    - '4'
+    - '5'
+    - '7'
+    group_whitelist: true
+    mute: 600
+    regex: false
+    reminder_channel: '527350560'
+    reminder_text: Äã·¢ËÍµÄÏûÏ¢°üº¬ÆÁ±Î´Ê¡£
+    remove: false
+    remove_and_ban: false
+    remove_and_revoke: 1
+    revoke: true
+  default_username_rules:
+    enabled: true
+    exact_match: false
+    group_list:
+    - '2'
+    - '4'
+    - '5'
+    - '7'
+    group_whitelist: true
+    mute: 600
+    regex: false
+    reminder_channel: '527350560'
+    reminder_text: ÄãµÄêÇ³Æ°üº¬ÆÁ±Î´Ê£¬ÇëÐÞ¸Ä¡£
+    remove: false
+    remove_and_ban: false
+    remove_and_revoke: 1
+    revoke: true
+token: token
+workChannel: workChannel

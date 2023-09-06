@@ -1,9 +1,16 @@
 from botpy.logging import get_logger
 
+from utils.roles import is_creator_or_super_admin_from_message
+from utils.send_message_with_log import reply_with_log
+
 _log = get_logger()
 
 
-async def handle_query_subchannel(client, message) -> None:
+async def handle_channel_list(client, message) -> None:
+    if not is_creator_or_super_admin_from_message(message):
+        await reply_with_log(message, "只有频道创建者和超级管理员才能使用该指令。")
+        return
+
     # 从消息对象中提取 guildID
     guildID = message.guild_id
 
@@ -19,4 +26,4 @@ async def handle_query_subchannel(client, message) -> None:
     for channel in channels:
         channelListMsg += f"ID: {channel['id']}, 名称: {channel['name']}\n"
 
-    _log.info(channelListMsg)
+    await reply_with_log(message, channelListMsg)

@@ -1,9 +1,7 @@
-aiocron
-openai
-beautifulsoup4
-selenium
-pandas
-aiohttp
-feedparser
-ruamel.yaml
 qq-botpy
+aiocron~=1.8
+pandas~=2.0.3
+bs4~=0.0.1
+beautifulsoup4~=4.12.2
+selenium~=4.1.4
+PyYAML~=6.0

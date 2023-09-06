@@ -1,7 +1,6 @@
 from botpy import logging
 
-from handler.handle_ban_words import handle_ban_words
-from handler.handle_question import handle_alias_search
+from handler.guild_moderation import guild_moderation
 
 _log = logging.get_logger()
 
@@ -16,5 +15,4 @@ async def message_create_handler(client, message):
     message_info = f"{timestamp} {channel_id} {nick}: {content}"
     _log.info(message_info)
 
-    await handle_ban_words(client, message)
-    await handle_alias_search(client, message)
+    await guild_moderation.handle_message(client, message)

@@ -1,42 +1,47 @@
-import json
 import re
-import os
 
-from utils.get_help import get_help
+from botpy.message import Message
+
+from utils.get_help import get_help, get_all_features, bot_features_dict
 from utils.send_message_with_log import reply_with_log
 
-# 获取 handle_help.py 文件所在的目录
-current_dir = os.path.dirname(os.path.abspath(__file__))
-# 构建 botFeatures.json 文件的完整路径
-bot_features_path = os.path.join(current_dir, '..', 'config', 'botFeatures.json')
-# 读取 botFeature.json 文件并解析成 Python 对象
-with open(bot_features_path, 'r', encoding='utf-8') as f:
-    bot_features = json.load(f)
+
+def format_features(features):
+    if len(features) % 2 == 1:
+        features.append("")
+    max_length = max(len(feature) for feature in features)
+    pairs = zip(features[::2], features[1::2])
+    return "\n".join([f"·{convert_to_full_width_char(pair[0]).ljust(max_length).replace(' ', chr(0x3000))}{chr(0x3000)}·{convert_to_full_width_char(pair[1]).ljust(max_length).replace(' ', chr(0x3000))}" if pair[1] else f"·{convert_to_full_width_char(pair[0]).ljust(max_length).replace(' ', chr(0x3000))}" for pair in pairs])
 
 
-# 处理帮助命令，向用户返回可用命令的信息。
-async def handle_help(client, message):
+def convert_to_full_width_char(s):
+    half_width_char = ''.join(chr(i) for i in range(0x41, 0x5B)) + ''.join(chr(i) for i in range(0x61, 0x7B))
+    full_width_char = ''.join(chr(i + 0xFEE0) for i in range(0x41, 0x5B)) + ''.join(chr(i + 0xFEE0) for i in range(0x61, 0x7B))
+    trans = str.maketrans(half_width_char, full_width_char)
+    return s.translate(trans)
+
+
+async def handle_help(client, message: Message):
     content = message.content
 
-    # 使用正则表达式匹配功能名称
-    command_pattern = re.compile(r"/帮助\s*(\S*)")
+    command_pattern = re.compile(r"/帮助\s+(/?\S*)")
     match = command_pattern.search(content)
-    feature_name = ""
-    if match:
-        feature_name = match.group(1)
+    feature_name = match.group(1) if match else ""
+
+    feature_name = feature_name.lstrip('/')
+
+    usage = bot_features_dict.get("帮助", {}).get("usage", "")
 
     if feature_name:
-        # 查找特定功能的帮助信息
         help_msg = get_help(feature_name)
         if not help_msg:
             help_msg = "未找到指定的功能，请检查您的输入。"
     else:
-        # 显示所有功能列表
-        help_msg = "机器人功能列表：\n\n"
-        for i, feature in enumerate(bot_features):
-            help_msg += f"{feature['name']}:\n{feature['description']}"
-            # 如果当前功能不是最后一个功能，则在描述后添加两个换行符
-            if i < len(bot_features) - 1:
-                help_msg += "\n\n"
+        features_by_category = get_all_features()
+        help_msg = f"{usage}\n------------------------------\n机器人功能列表：\n\n"
+        for category, features in features_by_category.items():
+            formatted_features = format_features(features)
+            help_msg += f"{category}:\n" + formatted_features + "\n\n"
+        help_msg = help_msg.rstrip('\n')
 
     await reply_with_log(message, help_msg)

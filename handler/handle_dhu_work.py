@@ -2,29 +2,33 @@ import sqlite3
 import time
 from typing import Tuple, List, Dict
 
+from botpy import logging
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 import pandas as pd
 
 from config import config
 from utils.send_message_with_log import post_with_log
 
+_log = logging.get_logger()
+
 
 async def get_dhu_work():
-    # 如果 ChromeDriver 可执行文件不在你的系统路径中，请在这里指定它的位置。
-    chromeDriverPath = config["chromeDriverPath"]
-    chrome_service = Service(executable_path=chromeDriverPath)
-    driver = webdriver.Chrome(service=chrome_service)
-    time.sleep(5)
+    # 设置Chrome选项
+    options = webdriver.ChromeOptions()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
 
-    driver.get(
-        "https://webproxy.dhu.edu.cn/https/446a50612140233230323231314468551c396b0a0faca42deda1bb464c2c/authserver/login?service=https%3A%2F%2Fwebproxy.dhu.edu.cn%3A443%2Flogin%3Fcas_login%3Dtrue")
-    # https://cas.dhu.edu.cn/authserver/login?service=http%3A%2F%2Fehall.dhu.edu.cn%2F_web%2Ffusionportal%2Fdhlogin.jsp%3F_p%3DYXM9MSZwPTEmbT1OJg__
+    # 初始化webdriver
+    driver = webdriver.Chrome(options=options)
+
+    # 打开网站
+    driver.get("https://webproxy.dhu.edu.cn")
 
     # 等待页面加载完成
-    time.sleep(2)
+    time.sleep(5)
 
     # 输入用户名和密码
     username_input = driver.find_element(By.ID, "username")
@@ -41,31 +45,22 @@ async def get_dhu_work():
     login_button.click()
 
     # 等待登录完成
-    time.sleep(5)
-
-    # 检查是否登录成功
-    if driver.current_url.startswith(
-            "https://webproxy.dhu.edu.cn/https/446a50612140233230323231314468551c396b0a0faca42deda1bb464c2c/authserver/login?service=https%3A%2F%2Fwebproxy.dhu.edu.cn%3A443%2Flogin%3Fcas_login%3Dtrue"):
-        # https://cas.dhu.edu.cn/authserver/login
-        print("Login failed. Please check your credentials or captcha if required.")
-    else:
-        print("Login successful!")
+    time.sleep(10)
 
     # 登录成功后，先访问学生工作系统网页
     middle_url = "https://webproxy.dhu.edu.cn/https/446a50612140233230323231314468550c2c6d400eaaa52decadbb464a26db7a8014/"
-    # https://student.dhu.edu.cn/xg_dhu/identity/index.action
     driver.get(middle_url)
 
     # 登录成功后，访问目标网页（校外勤工助学信息）
     target_url = "https://webproxy.dhu.edu.cn/http/446a50612140233230323231314468550c2c6d400eaaa52decadbb464a26db7a8014/xg_dhu/s/biz/xwqgzx/gwgl/list?jddes=6fd6afa75cac998360fcd2bd8a6998,B6589FC6AB0DC82CF12099D1C2D40AB994E8410C"
-    # https://student.dhu.edu.cn/xg_dhu/s/biz/xwqgzx/gwgl/list?jddes=6fd6afa75cac998360fcd2bd8a6998,B6589FC6AB0DC82CF12099D1C2D40AB994E8410C
     driver.get(target_url)
 
     # 等待页面加载完成
-    time.sleep(5)
+    time.sleep(10)
 
     # 获取网页源代码
     html = driver.page_source
+    # _log.debug(f"Website source code: {html}")
     soup = BeautifulSoup(html, 'html.parser')
 
     # 提取表格数据
@@ -86,7 +81,7 @@ async def get_dhu_work():
 
             table_data.append(rowData)
     else:
-        print("Table not found.")
+        _log.error("Table not found.")
         # Handle the case when the table is not found
 
     # 移除无关的列（第一列和第二列）
@@ -94,18 +89,19 @@ async def get_dhu_work():
         table_data[i] = table_data[i][2:]
 
     # 手动输入列名创建DataFrame
-    columns = ['岗位编号', '发布部门', '岗位名称/家教科目', '岗位类型', '预计待遇', '工作时间', '工作地点', '困难认定要求', '面向对象', '预报人数限制', '发布状态']
+    columns = ['岗位编号', '发布部门', '岗位名称/家教科目', '岗位类型', '预计待遇', '工作时间', '工作地点',
+               '困难认定要求', '面向对象', '预报人数限制', '发布状态']
     df1 = pd.DataFrame(table_data[1:], columns=columns)
 
     target_url2 = "https://webproxy.dhu.edu.cn/https/446a50612140233230323231314468550c2c6d400eaaa52decadbb464a26db7a8014/xg_dhu/s/biz/qgzxGwgl/list?jddes=739cf592e0a909884bc074f0e2d1310c,B6589FC6AB0DC82CF12099D1C2D40AB994E8410C"
-    # https://student.dhu.edu.cn/xg_dhu/s/biz/qgzxGwgl/list?jddes=739cf592e0a909884bc074f0e2d1310c,B6589FC6AB0DC82CF12099D1C2D40AB994E8410C
     driver.get(target_url2)
 
     # 等待页面加载完成
-    time.sleep(5)
+    time.sleep(10)
 
     # 获取网页源代码
     html = driver.page_source
+    # _log.debug(f"Website source code: {html}")
     soup = BeautifulSoup(html, 'html.parser')
 
     # 提取表格数据
@@ -130,11 +126,12 @@ async def get_dhu_work():
 
             table_data.append(rowData)
     else:
-        print("Table not found.")
+        _log.error("Table not found.")
         # Handle the case when the table is not found
 
     # 手动输入列名创建DataFrame
-    columns = ['操作', '学年', '校区', '用工单位', '岗位名称', '工作地点', '联系人', '联系电话', '招聘人数', '已聘人数', '空余岗位']
+    columns = ['操作', '学年', '校区', '用工单位', '岗位名称', '工作地点', '联系人', '联系电话', '招聘人数', '已聘人数',
+               '空余岗位']
     df2 = pd.DataFrame(table_data[1:], columns=columns)
 
     # 最后，关闭浏览器
@@ -152,8 +149,9 @@ async def get_dhu_work():
         "SELECT name FROM sqlite_master WHERE type='table' AND name='onCampusWork'").fetchone()
     if table_exists:
         df2_existing = pd.read_sql_query("SELECT * FROM onCampusWork", connection)
-        df2_merged = pd.concat([df2_existing, df2]).drop_duplicates(subset=['学年', '校区', '用工单位', '岗位名称', '工作地点'],
-                                                                    keep='first')
+        df2_merged = pd.concat([df2_existing, df2]).drop_duplicates(
+            subset=['学年', '校区', '用工单位', '岗位名称', '工作地点'],
+            keep='first')
     else:
         df2_merged = df2
 
@@ -199,12 +197,14 @@ async def get_dhu_work_info() -> Tuple[List[Dict[str, str]], List[Dict[str, str]
     return on_campus_works, off_campus_works
 
 
-async def update_on_campus_work_status(学年: str, 校区: str, 用工单位: str, 岗位名称: str, 工作地点: str, status: str) -> None:
+async def update_on_campus_work_status(学年: str, 校区: str, 用工单位: str, 岗位名称: str, 工作地点: str,
+                                       status: str) -> None:
     conn = sqlite3.connect('db/workInfo.db')
     cursor = conn.cursor()
 
-    cursor.execute("UPDATE onCampusWork SET 发布在频道 = ? WHERE 学年 = ? AND 校区 = ? AND 用工单位 = ? AND 岗位名称 = ? AND 工作地点 = ?",
-                   (status, 学年, 校区, 用工单位, 岗位名称, 工作地点))
+    cursor.execute(
+        "UPDATE onCampusWork SET 发布在频道 = ? WHERE 学年 = ? AND 校区 = ? AND 用工单位 = ? AND 岗位名称 = ? AND 工作地点 = ?",
+        (status, 学年, 校区, 用工单位, 岗位名称, 工作地点))
     conn.commit()
 
     cursor.close()
@@ -231,7 +231,8 @@ async def upload_dhu_work_to_channel(client) -> None:
         if work["操作"] == "申请工作" and work["发布在频道"] == "未发布":
             message = f"东华大学校内勤工助学信息:\n学年: {work['学年']}\n校区: {work['校区']}\n用工单位: {work['用工单位']}\n岗位名称: {work['岗位名称']}\n工作地点: {work['工作地点']}\n联系人: {work['联系人']}\n联系电话: {work['联系电话']}\n招聘人数: {work['招聘人数']}\n已聘人数: {work['已聘人数']}\n空余岗位: {work['空余岗位']}\n报名方式：\n【网上服务大厅】-【新学生工作管理系统】-【勤工助学】\n注意事项：详情请见【新学生工作管理系统】-【勤工助学】页面"
             await post_with_log(client, channel_id, message)
-            await update_on_campus_work_status(work["学年"], work["校区"], work["用工单位"], work["岗位名称"], work["工作地点"], "已发布")
+            await update_on_campus_work_status(work["学年"], work["校区"], work["用工单位"], work["岗位名称"],
+                                               work["工作地点"], "已发布")
 
     for work in off_campus_works:
         if work["发布在频道"] == "未发布":
@@ -241,5 +242,8 @@ async def upload_dhu_work_to_channel(client) -> None:
 
 
 async def upload_dhu_work(client):
-    await get_dhu_work()
+    try:
+        await get_dhu_work()
+    except Exception as e:
+        _log.error(f"An error occurred while getting DHU work: {e}")
     await upload_dhu_work_to_channel(client)

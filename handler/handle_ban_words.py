@@ -16,6 +16,7 @@ class BanWordConfig:
         self.muteTime = muteTime
         self.deleteUser = deleteUser
         self.words = words
+        self.patterns = [re.compile(word) for word in words]  # 缓存编译后的正则表达式模式
 
 
 def load_ban_words(filename: str) -> list[BanWordConfig]:
@@ -44,26 +45,20 @@ def find_matching_configuration(message_content: str, ban_words_config: list[Ban
     for configuration in ban_words_config:
         if not configuration.enabled:
             continue
-        for word in configuration.words:
-            if re.search(word, message_content):
+        for pattern in configuration.patterns:
+            if pattern.search(message_content):
                 return configuration
     return None
 
 
 async def handle_ban_words(client, message):
+    # 检查消息内容是否为 None
+    if message.content is None:
+        return
+
     ban_config = find_matching_configuration(message.content, ban_words_configs)
     if ban_config is not None:
         await apply_configuration(client, message, ban_words_configs)
-
-
-def find_matching_configuration(message_content, ban_words_config):
-    for configuration in ban_words_config:
-        if not configuration.enabled:
-            continue
-        for word in configuration.words:
-            if re.search(word, message_content):
-                return configuration
-    return None
 
 
 async def apply_configuration(client, message, ban_word_configs):
@@ -106,7 +101,7 @@ async def apply_configuration(client, message, ban_word_configs):
                 await client.api.get_delete_member(
                     guild_id=message.guild_id,
                     user_id=message.author.id,
-                    add_blacklist=False,
+                    add_blacklist=True,
                     delete_history_msg_days=3
                 )
             except ServerError as e:

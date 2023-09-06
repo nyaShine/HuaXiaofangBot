@@ -163,3 +163,5 @@ config.yaml
 emailVerification.db
 todo_and_notes.txt
 botpy.log.*
+/todo.txt
+/db/workInfo.db
