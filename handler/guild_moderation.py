@@ -162,7 +162,7 @@ class GuildModeration:
         if reminder_channel and reminder_text:
             if reminder_channel == "0":
                 # 在同一个channel发送提醒
-                await reply_with_log(message, content=reminder_text, at=True)
+                await reply_with_log(message, content=reminder_text, quote=False, at=True)
             else:
                 # 在不同的channel发送提醒
                 await cross_channel_reply_with_log(client, message, content=reminder_text,
