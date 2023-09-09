@@ -1,3 +1,4 @@
+import asyncio
 import sqlite3
 import time
 from typing import Tuple, List, Dict
@@ -9,12 +10,16 @@ from selenium.webdriver.common.by import By
 import pandas as pd
 
 from config import config
+from utils.run_command import run_command
 from utils.send_message_with_log import post_with_log
 
 _log = logging.get_logger()
 
 
 async def get_dhu_work():
+    # 打开 MotionPro
+    await run_command('/opt/MotionPro/vpn_cmdline', '-h', 'vpn.dhu.edu.cn', '-u', config['DHUUsername'],
+                      '-p', config['DHUPassword'])
     # 设置Chrome选项
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')
@@ -170,6 +175,12 @@ async def get_dhu_work():
 
     # 关闭数据库连接
     connection.close()
+
+    # 关闭 MotionPro
+    await run_command('/opt/MotionPro/vpn_cmdline', '-s')
+
+    # 重启 systemd-resolved 服务
+    await run_command('sudo', 'systemctl', 'restart', 'systemd-resolved')
 
 
 async def get_dhu_work_info() -> Tuple[List[Dict[str, str]], List[Dict[str, str]]]:
