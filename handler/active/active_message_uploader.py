@@ -18,8 +18,8 @@ def is_time_range_valid():
 
 
 async def active_message_uploader(client):
-    # 设置每天12点01分调用一次函数upload_dhu_work()
-    @aiocron.crontab('1 12 * * *')
+    # 设置每4小时调用一次函数upload_dhu_work()
+    @aiocron.crontab('0 */4 * * *')
     async def call_upload_dhu_work():
         if is_time_range_valid():
             asyncio.create_task(upload_dhu_work(client))

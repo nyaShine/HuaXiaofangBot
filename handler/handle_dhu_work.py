@@ -18,8 +18,8 @@ _log = logging.get_logger()
 
 async def get_dhu_work():
     # 打开 MotionPro
-    await run_command('/opt/MotionPro/vpn_cmdline', '-h', 'vpn.dhu.edu.cn', '-u', config['DHUUsername'],
-                      '-p', config['DHUPassword'])
+    await run_command('/opt/MotionPro/vpn_cmdline', '-h', 'vpn.dhu.edu.cn', '-u', str(config['DHUUsername']),
+                      '-p', str(config['DHUPassword']))
     # 设置Chrome选项
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')

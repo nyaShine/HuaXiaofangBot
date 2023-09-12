@@ -18,7 +18,7 @@ def encode_urls_in_text(content, encode_urls):
                 return url
         else:
             replaced_url = url.replace(".", "。")
-            return "链接中的.已经被替换为。\n" + replaced_url
+            return replaced_url
 
     replaced_content = url_regex.sub(replace_url, content)
     return replaced_content
