@@ -18,8 +18,21 @@ _log = logging.get_logger()
 
 async def get_dhu_work():
     # 打开 MotionPro
-    await run_command('/opt/MotionPro/vpn_cmdline', '-h', 'vpn.dhu.edu.cn', '-u', str(config['DHUUsername']),
-                      '-p', str(config['DHUPassword']))
+    try:
+        await asyncio.wait_for(
+            run_command('/opt/MotionPro/vpn_cmdline', '-h', 'vpn.dhu.edu.cn', '-u', str(config['DHUUsername']),
+                        '-p', str(config['DHUPassword'])), timeout=30)  # 设置超时时间为30秒
+    except asyncio.TimeoutError:
+        _log.error("VPN connection timed out.")
+    except Exception as e:
+        _log.error(f"An error occurred while connecting to VPN: {e}")
+    finally:
+        # 关闭 MotionPro
+        await run_command('/opt/MotionPro/vpn_cmdline', '-s')
+
+        # 重启 systemd-resolved 服务
+        await run_command('sudo', 'systemctl', 'restart', 'systemd-resolved')
+
     # 设置Chrome选项
     options = webdriver.ChromeOptions()
     options.add_argument('--headless')
